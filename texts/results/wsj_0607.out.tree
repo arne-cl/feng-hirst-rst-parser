@@ -1,0 +1,29 @@
+(Topic-Change[N][N]
+  (Explanation[N][S]
+    (Elaboration[N][S]
+      _!Three new issues begin trading on the New York Stock Exchange today ,!_
+      _!and one began trading on the Nasdaq/National Market System last week . <P>!_)
+    (Elaboration[N][S]
+      (Elaboration[N][S]
+        (Elaboration[N][S]
+          _!On the Big Board , Crawford & Co. , Atlanta ,!_
+          _!( CFD ) begins trading today . <s>!_)
+        (Joint[N][N]
+          _!Crawford evaluates health care plans , manages medical and disability aspects of worker 's compensation injuries!_
+          _!and is involved in claims adjustments for insurance companies . <P>!_))
+      (Explanation[N][S]
+        (Elaboration[N][S]
+          _!Also beginning trading today on the Big Board are El Paso Refinery Limited Partnership , El Paso , Texas ,!_
+          (Elaboration[N][S]
+            _!( ELP ) and Franklin Multi-Income Trust , San Mateo , Calif. ,!_
+            _!( FMI ) . <s>!_))
+        (Elaboration[N][S]
+          _!El Paso owns and operates a petroleum refinery . <s>!_
+          _!Franklin is a closed-end management investment company . <P>!_))))
+  (Elaboration[N][S]
+    (Elaboration[N][S]
+      _!On the Nasdaq over-the-counter system , Allied Capital Corp. , Washington , D.C. ,!_
+      _!( ALII ) began trading last Thursday . <s>!_)
+    (Elaboration[N][S]
+      _!Allied Capital is a closed-end management investment company!_
+      _!that will operate as a business development concern . <P>!_)))

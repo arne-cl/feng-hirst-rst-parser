@@ -1,0 +1,14 @@
+The program sentence_boundary.pl takes as an input a text file, and generates as
+output another text file in which each line contains only one sentence. Blank
+lines in the input file are considered to make the end of paragraphs, and are
+still present in the output file. It requires a honorifics file as an argument.
+A sample honorifics file is provided. This file MUST contain honorifics, not
+abbreviations. The program detects abbreviations using regular expressions.
+
+To use it, type
+
+sentence_boundary.pl -d HONORIFICS -i input_file -o output_file
+
+This program is provided 'as is', no warranties :)
+
+Any questions or comments, please send me an e-mail at mmunoz@uiuc.edu

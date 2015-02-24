@@ -1,24 +1,19 @@
-'''
-Created on 2013-02-18
 
-@author: Vanessa Wei Feng
-'''
 import sys
-import os
-import string
-import time
 import cPickle
 import paths
+import os.path
 
 save_suffix = ".dat"
 
 def saveData(filename, myobject, where = paths.save_folder, suffix = save_suffix):
-    fo = open(where + filename + suffix, "wb")
+    fo = open(os.path.join(where, filename + suffix), "wb")
+    #print 'Saved serialized file to %s' % os.path.join(where, filename + suffix)
     cPickle.dump(myobject, fo, protocol = cPickle.HIGHEST_PROTOCOL)
     fo.close()
 
 def loadData(filename, where = paths.save_folder, suffix = save_suffix):
-    data_file = where + filename + suffix
+    data_file = os.path.join(where, filename + suffix)
     try:
         fo = open(data_file, "rb")
     except IOError:

@@ -1,8 +1,4 @@
-'''
-Created on Feb 19, 2013
 
-@author: Vanessa Wei Feng
-'''
 cue_phrases = ['above all',
 'accordingly',
 'actually',

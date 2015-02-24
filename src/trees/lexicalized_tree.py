@@ -1,24 +1,25 @@
-'''
-Created on 2013-02-18
 
-@author: Vanessa Wei Feng
-'''
 import string
 from nltk.tree import Tree
 from trees.parse_tree import ParseTree
-from utils.utils import replace_words
+from utils.utils import unescape_penn_special_word
 
 class LexicalizedTree(ParseTree):
     "Extends nltk.tree to support lexical heads"
     head = -1
     head_sup = -1
-    penn_special_chars = {'-LRB-': '(', '-RRB-': ')', '-LAB-': '<', '-RAB-': '>',
-                            '-LCB-': '{', '-RCB-': '}', '-LSB-': '[', '-RSB-':']',
-                          '\\/' : '/', '\\*' : '*'}
-
+    
     def unescape(self, mystr):
         #return replace_words(mystr.lower(), self.penn_special_chars)
-        return replace_words(mystr, self.penn_special_chars)
+        return unescape_penn_special_word(mystr)
+    
+    
+    def unescape_leaves(self):
+        unescaped_leaves = []
+        for leaf in self.leaves():
+            unescaped_leaves.append(unescape_penn_special_word(leaf))
+        
+        return unescaped_leaves
     
     def get_head(self, pos):
         if not isinstance(self[pos], LexicalizedTree):
@@ -66,24 +67,10 @@ class LexicalizedTree(ParseTree):
     
     # TODO CHECKKKKK
     # If from_string = True, heads_file is directly the content of a head descriptor, no need to open the file
-    def lexicalize(self, heads_file, offset = 0, from_string = False):
+    def lexicalize(self, heads, offset = 0):
         #print 'inital self:', self
-        heads_file_content = "";
-        
-        if from_string:
-            self.heads_file = "from_string";
-            heads_file_content = heads_file;
-        else:
-            self.heads_file = heads_file;
-            heads_file_content = open(heads_file).read();
-        
         self.offset = offset
         
-        '''print 'heads_file_content'
-        for heads in heads_file_content.strip('\n'):
-                print heads'''
-
-        heads = map(lambda x: x.split('\t'), heads_file_content.strip('\n').split('\n'))
         #print heads
         self.remove_null_elements()
         
@@ -101,6 +88,7 @@ class LexicalizedTree(ParseTree):
             word_tb = self.unescape(sub[0]).replace(' ', '')  # Vanessa's modification
             #word_malt = self.unescape(heads[offset][0].lower())
             word_malt = self.unescape(heads[offset][0])
+#            print 'offset', offset, heads[offset]
             
             if word_tb != word_malt:
                 print "LEXICALIZATION ERROR: " + word_tb + " != " + word_malt
@@ -143,11 +131,13 @@ class LexicalizedTree(ParseTree):
                 done = True     
         
         if not done:
-            print "\n\n#### Lexicalization ERROR\n"
-            print heads
-            print head_sups
-            print self
-            exit(-1)
+            self.head = heads[0]
+            self.head_sup = head_sups[0]
+#            print "\n\n#### Lexicalization ERROR\n"
+#            print heads
+#            print head_sups
+#            print self
+#            exit(-1)
             
     def _pprint_flat(self, nodesep, parens, quotes):
         childstrs = []

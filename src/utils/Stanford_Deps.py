@@ -1,8 +1,4 @@
-'''
-Created on Feb 19, 2013
 
-@author: Vanessa Wei Feng
-'''
 class2type = {
 'dep' : ['dep'],
 'aux' : ['aux', 'auxpass', 'cop'],

@@ -1,8 +1,9 @@
 '''
-Created on Feb 19, 2013
+Created on 2014-01-17
 
-@author: Vanessa Feng
+@author: Vanessa Wei Feng
 '''
+
 import os
 import fnmatch
 import re
@@ -70,7 +71,7 @@ def slice_text(mystr):
     return mystr.lower().split()
 
 def get_ngrams(items, n, NList = {}):
-  #  NList = {}
+    #  NList = {}
     if n > 1:
         myitems = ["<!"] + items + ["!>"]
     else:
@@ -90,23 +91,23 @@ def get_one_ngram(items, n, freq_word_dict = None):
             if item not in freq_word_dict:
                 items1.append(item)
         
-        if n > 1 or n < -1:
-            myitems = ["<!"] + items1 + ["!>"]
-        else:
-            myitems = items1
+#        if n > 1 or n < -1:
+#            myitems = ["<!"] + items1 + ["!>"]
+#        else:
+#            myitems = items1
         if n > 0:
-            return "_".join(myitems[0:n]).lower()
+            return "_".join(items1[0:n]).lower()
         else:
-            return "_".join(myitems[n:]).lower()
+            return "_".join(items1[n:]).lower()
 
-    if n > 1 or n < -1:
-        myitems = ["<!"] + items + ["!>"]
-    else:
-        myitems = items
+#    if n > 1 or n < -1:
+#        myitems = ["<!"] + items + ["!>"]
+#    else:
+#        myitems = items
     if n > 0:
-        return "_".join(myitems[0:n]).lower()
+        return "_".join(items[0:n]).lower()
     else:
-        return "_".join(myitems[n:]).lower()
+        return "_".join(items[n:]).lower()
 
 def filter_ngrams(ngrams, threshold = 1, max_threshold = 0):
     ngrams_sel = {}
@@ -230,3 +231,63 @@ def filter_syntactic_tag(syntactic_tag):
     return syntactic_tag
     #return re.sub('[0-9\-=]*$', '', syntactic_tag.lower())
     
+
+def get_word_list_from_main_edus(span):
+    word_list = []
+    if isinstance(span, Tree):
+        all_main_pos = get_main_edus(span)
+        for main_pos in all_main_pos:
+            word_list.extend(get_word_list_from_span(span[main_pos]))
+    else:
+        word_list = get_word_list_from_span(span)
+        
+    return word_list
+
+def get_word_list_from_span(span):
+    word_list = []
+    if isinstance(span, Tree):
+        for leaf in span.leaves():
+            word_list.extend(leaf)
+    else:
+        word_list = span
+        
+    return word_list
+
+def get_main_spans(span, offset):
+    main_span_list = []
+    if isinstance(span, Tree):
+        for main_pos in get_main_edus(span):
+            main_span = span[main_pos]
+            ''' find out the index of this edu '''
+            for i in range(len(span.leaves())):
+                if list(span.leaf_treeposition(i)) == main_pos:
+                    break
+            
+            #print i, span.leaf_treeposition(i), main_pos
+            main_offset = offset + i
+            main_span_list.append((main_span, main_offset))
+    else:
+        main_span_list = [(span, offset)]
+
+    return main_span_list
+
+def get_PoS_list_from_span(syntax_trees, span_pos):
+    (start_sent_id, start_edu_offset, start_word_offset, end_sent_id, end_edu_offset, end_word_offset) = span_pos
+    pos_list = []
+    
+    if start_sent_id == end_sent_id:
+        for i in range(start_word_offset, end_word_offset + 1):
+            pos_list.append(syntax_trees[start_sent_id].pos()[i][1])
+
+    else:
+        for i in range(start_word_offset, len(syntax_trees[start_sent_id].leaves())):
+            pos_list.append(syntax_trees[start_sent_id].pos()[i][1])
+        
+        for sent_id in range(start_sent_id + 1, end_sent_id - 1):
+            for i in range(len(syntax_trees[sent_id].leaves())):
+                pos_list.append(syntax_trees[sent_id].pos()[i][1])
+        
+        for i in range(end_word_offset + 1):
+            pos_list.append(syntax_trees[end_sent_id].pos()[i][1])
+    
+    return pos_list

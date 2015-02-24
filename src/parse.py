@@ -1,293 +1,304 @@
 '''
-Created on 2013-02-17
+Created on 2014-01-17
 
-@author: Wei
+@author: Vanessa Wei Feng
 '''
-from prep.syntax_parser import SyntaxParser
-from segmentation.segmenter import Segmenter
-from treebuilder.build_tree import TreeBuilder
-from treebuilder.build_tree_greedy import GreedyTreeBuilder
+
+from segmenters.crf_segmenter import CRFSegmenter
+from treebuilder.build_tree_CRF import CRFTreeBuilder
+
 from optparse import OptionParser
 
 import paths
 import os.path
 import sys
-import utils.utils
-import re
+from document.doc import Document
 import time
-import nltk
 import traceback
-import utils.rst_lib
-import subprocess
-import utils.serialize
-from trees.parse_tree import ParseTree
-import math
-import utils.rst_lib
 from datetime import datetime
 
-class DiscourseParser():
-    def __init__(self, verbose, seg, output, SGML, edus, feature_sets = 'FengHirst'):
-        ''' This is Hilda's segmentation module '''
-        self.segmenter = None
-        self.verbose = verbose
-        self.seg = seg
-        self.output = output
-        self.SGML = SGML
-        self.edus = edus
-        self.dependencies = True
-        self.max_iters = 0
-        self.feature_sets = feature_sets
+from logs.log_writer import LogWriter
+from prep.preprocesser import Preprocesser
 
+import utils.serialize
+
+class DiscourseParser():
+    def __init__(self, options, output_dir = None, 
+                 log_writer = None):
+        self.verbose = options.verbose
+        self.skip_parsing = options.skip_parsing
+        self.global_features = options.global_features
+        self.save_preprocessed_doc = options.save_preprocessed_doc
+        
+        self.output_dir = os.path.join(paths.OUTPUT_PATH, output_dir if output_dir is not None else '')
+        if not os.path.exists(self.output_dir):
+            print 'Output directory %s not exists, creating it now.' % self.output_dir
+            os.makedirs(self.output_dir)
+        
+        self.log_writer = LogWriter(log_writer)
+        
+        self.feature_sets = 'gCRF'
+        
         initStart = time.time()
+
+        self.preprocesser = None
         try:
-            self.segmenter = Segmenter(_model_path = os.path.join(paths.SEG_MODEL_PATH), _model_file = "training.scaled.model", _scale_model_file = "bin_scale",
-                                        _name = "segmenter",
-                                       verbose = self.verbose, dependencies = self.dependencies)
-            
+            self.preprocesser = Preprocesser()
+        except Exception, e:
+            print "*** Loading Preprocessing module failed..."
+            print traceback.print_exc()
+
+            raise e
+        try:
+            self.segmenter = CRFSegmenter(_name = self.feature_sets, verbose = self.verbose, global_features = self.global_features)
         except Exception, e:
             print "*** Loading Segmentation module failed..."
+            print traceback.print_exc()
+
+            raise e
         
-            if not self.segmenter is None:
-                self.segmenter.unload()
-            raise
-        
-        self.treebuilder = None
-        try:
-            if self.feature_sets == 'FengHirst':
-                self.treebuilder = GreedyTreeBuilder(_model_path = paths.TREE_BUILD_MODEL_PATH,
-                                                     _bin_model_file = ['struct/FengHirst/within_no_context.svmperf', 
-                                                                        'struct/FengHirst/above_no_context.svmperf'],
-                                                     _bin_scale_model_file = None,
-                                                     _mc_model_file = ['label/FengHirst/within_label_nuclearity_no_context.multiclass', 
-                                                                       'label/FengHirst/above_label_nuclearity_no_context.multiclass'],
-                                                     _mc_scale_model_file = None, 
-                                                     _name = "FengHirst", verbose = self.verbose, use_contextual_features = False) 
-                    
-                
-#            else:
-#                self.treebuilder = TreeBuilder(_model_path = paths.INIT_TREE_BUILD_MODEL_PATH,
-#                                               _bin_model_file = 'struct/hilda/liblinear_bin_model.dat', _bin_scale_model_file = 'struct/hilda/bin_scale',
-#                                               _mc_model_file = 'label/hilda/libsvm_rbf_mc_model.dat', _mc_scale_model_file = 'label/hilda/mc_scale', 
-#                                               _name = "hilda", verbose = self.verbose, use_contextual_features = False) 
-
-            
-
-
+        try:        
+            if not self.skip_parsing:
+                self.treebuilder = CRFTreeBuilder(_name = self.feature_sets, verbose = self.verbose) 
+            else:
+                self.treebuilder = None
         except Exception, e:
             print "*** Loading Tree-building module failed..."
             print traceback.print_exc()
-            
-            if not self.treebuilder is None:
-                self.treebuilder.unload()
-            raise
-
+            raise e
+        
+        
         initEnd = time.time()
-        print 'finished initialization in %.2f seconds' % (initEnd - initStart)        
+        print 'Finished initialization in %.2f seconds.' % (initEnd - initStart)
+        print       
     
         
     def unload(self):
+        if self.preprocesser is not None:
+            self.preprocesser.unload()
+        
         if not self.segmenter is None:
             self.segmenter.unload()
         
         if not self.treebuilder is None:
             self.treebuilder.unload()
+        
     
     def parse(self, filename):
         if not os.path.exists(filename):
             print '%s does not exist.' % filename
             return
         
-        print 'parsing %s' % filename
+        self.log_writer.write('***** Parsing %s...' % filename)
+        
+        try:
+            core_filename = os.path.split(filename)[1]
+            serialized_doc_filename = os.path.join(self.output_dir, core_filename + '.doc.ser')
+            doc = None
+            if os.path.exists(serialized_doc_filename):
+                doc = utils.serialize.loadData(core_filename, self.output_dir, '.doc.ser')
+            
+            if doc is None or not doc.preprocessed:   
+                preprocessStart = time.time()
+                doc = Document()                 
+                doc.preprocess(filename, self.preprocesser)               
                 
-        try:      
-            segStart = time.time()
-            text = open(filename).read()
-            
-            formatted_text = ''
-            sentences = []
-            for para_text in text.split('<p>'):
-                sents = para_text.strip().split('<s>')
-                formatted_text += ' '.join(sents) + '\n\n'
-                sentences.extend(sents)
-            
-            edus = None
-            
-            if self.edus:
-                if not os.path.exists(filename + '.edus'):
-                    print 'User specified EDU file ' + filename + '.edus' + ' no found!'
-                    print 'Ignore "-E" option and conduct segmentation'
-                    self.edus = False
-                else :
-                    fin = open(filename + '.edus')
-                    edus = []
-                    for line in fin:
-                        line = line.strip()
-                        if line != '':
-                            line = re.sub('\</??edu\>', '', line)
-                            edus.append(' '.join(nltk.word_tokenize(line)))
-                    fin.close()
+                preprocessEnd = time.time()
                 
-#                for edu in edus:
-#                    print edu
+                print 'Finished preprocessing in %.2f seconds.' % (preprocessEnd - preprocessStart)
+                self.log_writer.write('Finished preprocessing in %.2f seconds.' % (preprocessEnd - preprocessStart))
+                
+                if self.save_preprocessed_doc:
+                    print 'Saved preprocessed document data to %s.' % serialized_doc_filename           
+                    utils.serialize.saveData(core_filename, doc, self.output_dir, '.doc.ser')
+                
+            else:
+                print 'Loaded saved serialized document data.'
             
+            print
+        except Exception, e:
+            print "*** Preprocessing failed ***"
+            print traceback.print_exc()
+               
+            raise e
+        
+        try:
+            if not doc.segmented:
+                segStart = time.time()
+                
+                self.segmenter.segment(doc)
+                
+                if self.verbose:
+                    print 'edus'
+                    for e in doc.edus:
+                        print e
+                    print
+                    print 'cuts'
+                    for cut in doc.cuts:
+                        print cut
+                    print
+                    print 'edu_word_segmentation'
+                
+                segEnd = time.time()
+                print 'Finished segmentation in %.2f seconds.' % (segEnd - segStart)     
+                print 'Segmented into %d EDUs.' % len(doc.edus)
+                
+                
+                self.log_writer.write('Finished segmentation in %.2f seconds. Segmented into %d EDUs.' % ((segEnd - segStart), len(doc.edus)))
+                if self.save_preprocessed_doc:
+                    print 'Saved segmented document data to %s.' % serialized_doc_filename           
+                    utils.serialize.saveData(core_filename, doc, self.output_dir, '.doc.ser')
+            else:
+                print 'Already segmented into %d EDUs.' % len(doc.edus)
             
-            ''' Step 1: segment the each sentence into EDUs '''
-
-            (trees, deps, cuts, edus) = self.segmenter.do_segment(text, edus)
-            
-            #for tree in trees:
-                #print tree.pprint()
-
-            escaped_edus = self.segmenter.get_escaped_edus(trees, cuts, edus)
-#            print cuts
-
+            print
+        
             if options.verbose:
-                for e in edus:
+                for e in doc.edus:
                     print e
             
-            print 'finished segmentation, segmented into %d EDUs' % len(edus)
-            
-            if self.output and not self.edus:
-                print 'output segmentation result to %s.edus' % filename
-                
-                f_o = open(filename + ".edus", "w")
-                for e in escaped_edus:
-                    f_o.write("<edu>%s</edu>\n" % e)
-                f_o.close()
-            '''else:
-                for e in escaped_edus:
-                    print "<edu>%s</edu>" % e'''
-
-            segEnd = time.time()
-            
-            print 'finished segmentation in %.2f seconds' % (segEnd - segStart)
-            
-                
+                 
         except Exception, e:
             print "*** Segmentation failed ***"
             print traceback.print_exc()
-
-            if not self.segmenter is None:
-                self.segmenter.unload()
-                
-            if not self.treebuilder is None:
-                self.treebuilder.unload()
                
-            raise
+            raise e
+        
+        
         try:    
-            if not self.seg:
-                ''' Step 2: build text-level discourse tree '''
+            ''' Step 2: build text-level discourse tree '''
+            if self.skip_parsing:
+                outfname = os.path.join(self.output_dir, core_filename + ".edus")
+                print 'Output EDU segmentation result to %s' % outfname
+                f_o = open(outfname, "w")
+                for sentence in doc.sentences:
+                    sent_id = sentence.sent_id
+                    edu_segmentation = doc.edu_word_segmentation[sent_id]
+                    i = 0
+                    sent_out = []
+                    for (j, token) in enumerate(sentence.tokens):
+                        sent_out.append(token.word)
+                        if j < len(sentence.tokens) - 1 and j == edu_segmentation[i][1] - 1:
+                            sent_out.append('EDU_BREAK')
+                            i += 1
+                    f_o.write(' '.join(sent_out) + '\n')
+                    
+                f_o.flush()
+                f_o.close()
+            else:
                 treeBuildStart = time.time()
+    #                
+                outfname = os.path.join(self.output_dir, core_filename + ".tree")
                 
-                outfname = filename + ".%s" % ("tree" if not self.SGML else "dis")
-                parse_trees = self.treebuilder.build_tree((trees, deps, cuts, edus), "pouet", paths.MODEL_PATH)
+                pt = self.treebuilder.build_tree(doc)
                         
-                print 'finished tree building'
-#                        print parse_trees[0]
-#                        print
-                if parse_trees == []:
+                print 'Finished tree building.'
+    
+                if pt is None:
                     print "No tree could be built..."
                         
                     if not self.treebuilder is None:
                         self.treebuilder.unload()
-
+    
                     return -1
                                  
-#               Unescape the parse tree
-                if parse_trees and len(parse_trees):
-                    pt = parse_trees[0]
+    #           Unescape the parse tree
+                if pt:
+                    doc.discourse_tree = pt
+                    treeBuildEnd = time.time()
                     
-                    #pt_edges = utils.utils.transform_to_ZhangShasha_tree(pt)
-                    #pts.append(pt_edges)
-                    for i in range(len(escaped_edus)):
-                        #print i, escaped_edus[i], pt.leaves()[i]
-                        pt.__setitem__(pt.leaf_treeposition(i), '_!%s!_' % escaped_edus[i])
-        
-                    #print pt.pprint()
-                    out = pt.pprint() if not self.SGML else utils.utils.print_SGML_tree(pt)
+    #                print out
+                    print 'Finished tree building in %.2f seconds.' % (treeBuildEnd - treeBuildStart)  
+                    self.log_writer.write('Finished tree building in %.2f seconds.' % (treeBuildEnd - treeBuildStart))
                     
-                    print 'output tree building result to %s' % outfname
+                    for i in range(len(doc.edus)):
+                        pt.__setitem__(pt.leaf_treeposition(i), '_!%s!_' % ' '.join(doc.edus[i]))
+                    
+                    out = pt.pprint()
+                    print 'Output tree building result to %s.' % outfname
                     f_o = open(outfname, "w")
                     f_o.write(out)
                     f_o.close()
-                    
-                    treeBuildEnd = time.time()
-                    
-                    print 'finished tree building in %.2f seconds' % (treeBuildEnd - treeBuildStart)     
-
-
+    
+                
+                if self.save_preprocessed_doc:
+                    print 'Saved fully processed document data to %s.' % serialized_doc_filename           
+                    utils.serialize.saveData(core_filename, doc, self.output_dir, '.doc.ser')
+            
+            print
         except Exception, e:
             print traceback.print_exc()
             
-            if not self.treebuilder is None:
-                self.treebuilder.unload()
-
-            raise
-
+            raise e
+    
         print '==================================================='
         #return dists#, probs
-        
-v = '1.0'
-if __name__ == '__main__':
-    usage = "usage: %prog [options] input_file/dir1 [input_file/dir2] ..."
 
-    optParser = OptionParser(usage=usage, version="%prog " + v)
-    
-    optParser.add_option("-o", "--output", dest="output", action = "store_true",
-                      help="write the results to input_file.edus, input_file.tree (or input_file.dis if use \"-S\" option)", 
-              default=False)
-    optParser.add_option("-s", "--seg-only",
-                      action="store_true", dest="seg", default=False,
-                      help="perform segmentation only")
-    optParser.add_option("-v", "--verbose",
-                      action="store_true", dest="verbose", default=False,
-                      help="verbose mode")
-    optParser.add_option("-D", "--directory",
-                      action="store_true", dest="directory", default=False,
-                      help="parse all .txt files in the given directory")
-    optParser.add_option("-S", "--SGML",
-                      action="store_true", dest="SGML", default=False,
-                      help="print discourse tree in SGML format")
-    optParser.add_option("-E", "--Edus",
-                         action="store_true", dest="edus", default=False,
-                         help="use the edus given by the users (do not perform segmentation). " +\
-             "Given edus need to be stored in a file called input_file.edus, with " +\
-             "an EDU surrounded by \"<edu>\" and \"</edu>\" tags per line.")
-    
-    
-    (options, args) = optParser.parse_args()
-
+def main(options, args):
     parser = None
     try:
-        if len(args) == 0:
-            print usage
-            sys.exit(1)
-        
-        parser = DiscourseParser(verbose = options.verbose, seg = options.seg, output = options.output, SGML = options.SGML, edus = options.edus)
-        
-        if options.directory:
-            for subdir in args:
-                for fname in os.listdir(subdir):
-                    if fname.endswith('.out'):
-                        '''if options.SGML and os.path.exists(os.path.join(subdir, fname + '.dis')):
-                            continue
-                        
-                        if not options.SGML and os.path.exists(os.path.join(subdir, fname + '.tree')):
-                            continue'''
-                        
-                        outfname = fname + ".%s" % ("tree" if not parser.SGML else "dis")
-                        if not os.path.exists(os.path.join(subdir, outfname)):
-                        #if True:
-                            parser.parse(os.path.join(subdir, fname))                
+        if options.output_dir:
+            output_dir = args[0]
+            start_arg = 1
         else:
-            for fname in args:
-                #print reference_fname
-                #(dists, probs) = parser.parse(fname, reference_fname)
-                outfname = fname + ".%s" % ("tree" if not parser.SGML else "dis")
-                #if not os.path.exists(outfname):
-                if True:
-                    dists = parser.parse(fname)
+            output_dir = None
+            start_arg = 0
+        
+        log_writer = None
+        if options.logging:
+            log_fname = os.path.join(paths.LOGS_PATH, 'log_%s.txt' % (output_dir if output_dir else datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
+            log_writer = open(log_fname, 'w')
+
+        
+        if options.filelist:
+            file_fname = args[start_arg]
+            if not os.path.exists(file_fname) or not os.path.isfile(file_fname):
+                print 'The specified file list %s is not a file or does not exist' % file_fname
+                return
+                 
+        parser = DiscourseParser(options = options,
+                                 output_dir = output_dir, 
+                                 log_writer = log_writer)
+        
+        files = []
+        skips = 0
+        if options.filelist:
+            file_fname = args[start_arg]
+            for line in open(file_fname).readlines():
+                fname = line.strip()
+                    
+                if os.path.exists(fname):
+                    if os.path.exists(os.path.join(parser.output_dir, os.path.split(fname)[1] + '.tree')):
+                        skips += 1
+                    else:
+                        files.append(fname)
+                else:
+                    skips += 1
+#                    print 'Skip %s since it does not exist.' % fname          
+        else:
+            fname = args[start_arg]
+#            print os.path.join(paths.tmp_folder, os.path.split(fname)[1] + '.xml')
+            if os.path.exists(fname):
+                if os.path.exists(os.path.join(parser.output_dir, os.path.split(fname)[1] + '.tree')):
+                    skips += 1
+                else:
+                    files.append(fname)
+            else:
+                skips += 1
+        
+        print 'Processing %d documents, skipping %d' % (len(files), skips)
+        
+        for (i, filename) in enumerate(files):
+            print 'Parsing %s, progress: %.2f (%d out of %d)' % (filename, i * 100.0 / len(files), i, len(files))
+                    
+            try:
+                parser.parse(filename)
                 
+                parser.log_writer.write('===================================================')
+            except Exception, e:
+                print 'Some error occurred, skipping the file'
+                raise e
+           
         parser.unload()
         
     except Exception, e:
@@ -295,3 +306,42 @@ if __name__ == '__main__':
         if not parser is None:
             parser.unload()
 
+
+
+v = '1.0'
+if __name__ == '__main__':
+    usage = "Usage: %prog [options] input_file/dir"
+    
+    optParser = OptionParser(usage=usage, version="%prog " + v)
+    optParser.add_option("-v", "--verbose",
+                      action="store_true", dest="verbose", default=False,
+                      help="verbose mode")
+    optParser.add_option("-s", "--skip_parsing",
+                      action="store_true", dest="skip_parsing", default=False,
+                      help="Skip parsing, i.e., conduct segmentation only.")
+    optParser.add_option("-D", "--filelist",
+                      action="store_true", dest="filelist", default=False,
+                      help="parse all files specified in the filelist file, one file per line.")
+    optParser.add_option("-t", "--output_dir",
+                         action="store_true", dest="output_dir", default=False,
+                         help="Specify a directory for output files.")
+    optParser.add_option("-g", "--global_features",
+                         action="store_true", dest="global_features", default=False,
+                         help="Perform a second pass of EDU segmentation using global features.")
+    optParser.add_option("-l", "--logging",
+                         action="store_true", dest="logging", default=False,
+                         help="Perform logging while parsing.")
+    optParser.add_option("-e", "--save",
+                         action="store_true", dest="save_preprocessed_doc", default=False,
+                         help="Save preprocessed document into serialized file for future use.")
+    
+    
+       
+    (options, args) = optParser.parse_args()
+    if len(args) == 0:
+        optParser.print_help()
+        sys.exit(1)
+                
+        
+    main(options, args)
+    

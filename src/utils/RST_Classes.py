@@ -1,8 +1,4 @@
-'''
-Created on Feb 19, 2013
 
-@author: Vanessa Wei Feng
-'''
 class2rel = {
 'Attribution': ['attribution', 'attribution-e', 'attribution-n', 'attribution-negative'],
 'Background' : ['background', 'background-e', 'circumstance', 'circumstance-e'],

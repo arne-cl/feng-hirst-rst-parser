@@ -1,19 +1,9 @@
-'''
-Created on 2013-02-17
-
-@author: Vanessa Wei Feng
-'''
-import os.path
-import paths
-from datetime import datetime
-import subprocess
 import re
 from itertools import izip
 from nltk.tree import Tree
-from RST_Classes import rel_status_classes, class2rel
-import math
 from trees.parse_tree import ParseTree
 import rst_lib
+import string
 
 def replace_words(text, word_dic):
     """
@@ -24,6 +14,15 @@ def replace_words(text, word_dic):
     def translate(match):
         return word_dic[match.group(0)]
     return rc.sub(translate, text)
+
+def unescape_penn_special_word(text):
+    penn_special_chars = {'-LRB-': '(', '-RRB-': ')', '-LAB-': '<', '-RAB-': '>',
+                            '-LCB-': '{', '-RCB-': '}', '-LSB-': '[', '-RSB-':']',
+                          '\\/' : '/', '\\*' : '*',
+                          '``' : '"', "''" : '"', '`' : "'"}
+
+    return replace_words(text, penn_special_chars)
+
 
 def sorted_dict_values_by_key(adict):
     L = []
@@ -36,6 +35,7 @@ def sorted_dict_keys(adict):
     return sorted(keys)
 
 argmax = lambda array: max(izip(array, xrange(len(array))))[1]
+argmin = lambda array: min(izip(array, xrange(len(array))))[1]
 
 def permutation_indices(data):
     return sorted(range(len(data)), key = data.__getitem__)
@@ -119,47 +119,13 @@ def split_hilda_inputfile_by_sentence(f):
     
     return sents
 
-def get_heads(mrg, outfname = None):
-    """
-    Calls Penn2Malt to find the lexical heads of the syntax tree contained in
-     "MRG" form-style input string.
-    """
 
-    outfname = os.path.join(paths.PENN2MALT_PATH, datetime.now().strftime('%Y_%m_%d_%H_%M_%S')) if outfname is None else outfname
-    
-    f_temp = open(outfname, "w")
-    f_temp.write(mrg)
-    f_temp.close()
-    
-    p = subprocess.Popen(args = ["java", "-Xmx1500m", "-jar", os.path.join(paths.PENN2MALT_PATH, "Penn2Malt.jar"), 
-                                 outfname, 
-                                 os.path.join(paths.PENN2MALT_PATH, "headrules.txt"), 
-                                 "1", "2", "penn"], 
-                         stdout = subprocess.PIPE, 
-                         stderr = subprocess.STDOUT) # shell=True
-    outputlines = p.stdout.readlines()
-    ret_code = p.wait()
-
-    if ret_code == 0:
-        result = open(outfname + ".1.pa.gs.tab").read().split("\n\n")[:-1]
-        for fname in [outfname, outfname + '.1.pa.pos', outfname + '.1.pa.dep', outfname + '.1.pa.gs.tab']:
-            os.remove(fname)
-            
-        return result
-    else:
-        for fname in [outfname, outfname + '.1.pa.pos', outfname + '.1.pa.dep', outfname + '.1.pa.gs.tab']:
-            if os.path.exists(fname):
-                os.remove(fname)
-        raise NameError("*** Penn2Malt crashed, with trace %s..." % outputlines)
-        return ""
-
-    
 def get_sent_dependencies(deps):
     sent2dep_list = []
     for (i, sent_deps) in enumerate(deps):
         sent_dep_list = []
         #tree = trees[i]
-        for dep_item in sent_deps.split('\n'):
+        for dep_item in sent_deps.split('\r\n'):
             dep_pattern = r'(.+?)\((.+?)-(\d+?), (.+?)-(\d+?)\)'
             dep_m = re.match(dep_pattern, dep_item)
             if dep_m is not None:
@@ -171,6 +137,7 @@ def get_sent_dependencies(deps):
                 dependent_word_number = int(dep_m.group(5)) - 1
                 
                 dep_item_info = (dep_type, governor_word, governor_word_number, dependent_word, dependent_word_number)
+#                print 
                 sent_dep_list.append(dep_item_info)
 
         sent2dep_list.append(sent_dep_list)
@@ -178,6 +145,9 @@ def get_sent_dependencies(deps):
     return sent2dep_list
 
 def print_SGML_tree(parse_tree, offset = 1, depth = 0, status = None, relation = None):
+    joty_script_mapping = {'textual-organization' : 'TextualOrganization',
+                           'same-unit' : 'Same-Unit'}
+    
     out = ''
     for i in range(depth):
         out += '  '
@@ -201,13 +171,13 @@ def print_SGML_tree(parse_tree, offset = 1, depth = 0, status = None, relation =
     right_status = 'Nucleus' if parse_tree.node[-2] == 'N' else 'Satellite'
 
     if left_status[0] == 'S' and right_status[0] == 'N':
-        left_relation = parse_tree.node[ : -6]
+        left_relation = replace_words(parse_tree.node[ : -6], joty_script_mapping)
         right_relation = 'span'
     elif right_status[0] == 'S' and left_status[0] == 'N':
-        right_relation = parse_tree.node[ : -6]
+        right_relation = replace_words(parse_tree.node[ : -6], joty_script_mapping)
         left_relation = 'span'
     else:
-        left_relation = parse_tree.node[ : -6]
+        left_relation = replace_words(parse_tree.node[ : -6], joty_script_mapping)
         right_relation = left_relation
         
     out += print_SGML_tree(left, offset, depth + 1, left_status, left_relation)
@@ -220,422 +190,40 @@ def print_SGML_tree(parse_tree, offset = 1, depth = 0, status = None, relation =
     return out
 
 
-def transform_to_shift_reduce_actions(parse_tree, relation = True, nuclearity = True, compressed = True, offset = 1):
-    if not isinstance(parse_tree, Tree):
-        if not compressed:
-            return ['S']
-        else:
-            return []
-    
-    if nuclearity:
-        rel_classes = rel_status_classes
-    else:
-        rel_classes = class2rel.keys()
-        
-    actions = []
-    left = parse_tree[0]
-    right = parse_tree[1]
-    if isinstance(left, Tree):
-        left_span = len(left.leaves())
-    else:
-        left_span = 1 
-        
-    actions.extend(transform_to_shift_reduce_actions(left, relation, nuclearity, compressed, offset))
-    actions.extend(transform_to_shift_reduce_actions(right, relation, nuclearity, compressed, offset + left_span))
-    
-    head_action = 'R'
-    if relation:
-        if nuclearity:
-            action = parse_tree.node
-        else:
-            action = parse_tree.node[ : -6]
-        
-        head_action += str(rel_classes.index(action))
-    else:
-        if nuclearity:
-            action = parse_tree.node[ -6 : ]
-            head_action += action
-    
-    if compressed:
-        left_start = offset
-        left_end = offset + left_span - 1
-    
-        right_start = left_end + 1
-        if isinstance(right, Tree):
-            right_span = len(right.leaves())
-        else:
-            right_span = 1
-        right_end = right_start + right_span - 1
-        
-        head_action += '[(%d,%d),(%d,%d)]' % (left_start, left_end, right_start, right_end)
-        
-    actions.append(head_action)
-    
-    return actions   
-    
-    
-    
-def transform_to_ZhangShasha_tree(parse_tree, offset = 0, treepos = 0, nuclearity = True):
-    edges = []
-    
-    if not isinstance(parse_tree, Tree):
-        return edges
-    
-    ''' use breadth-first search '''
-    if nuclearity:
-        rel_classes = rel_status_classes
-    else:
-        rel_classes = class2rel.keys()
 
-    rel_classes.append('NO-REL')
-    
-    if nuclearity:
-        parent_label = parse_tree.node
-    else:
-        parent_label = parse_tree.node[ : -6] if parse_tree.node != 'NO-REL' else parse_tree.node
-            
-    parent_label = str(rel_classes.index(parent_label))
-    parent_label += ':' + str(treepos)
-    parent_label = parent_label.replace('-', '_')
-    
-    left_treepos = treepos + 1
-    left = parse_tree[0]
-    if not isinstance(left, Tree):
-        left_label = 'e%d' % (offset + 1)
-        left_span = 1
-        right_treepos = treepos + 1
-   
-    else:
-        if nuclearity:
-            left_label = left.node
-        else:
-            left_label = left.node[ : -6] if left.node != 'NO-REL' else left.node
-        
-        left_label = str(rel_classes.index(left_label)) + ':' + str(left_treepos)
-        left_span = len(left.leaves())
-        right_treepos = treepos + len(left.treepositions()) + len(left.leaves())
-                                   
-    right = parse_tree[1]
-    if not isinstance(right, Tree):  
-        right_label = 'e%d' % (offset + 1 + left_span) 
-    else:
-        if nuclearity:
-            right_label = right.node
-        else:
-            right_label = right.node[ : -6] if right.node != 'NO-REL' else right.node
-            
-        right_label = str(rel_classes.index(right_label)) + ':' + str(right_treepos)
-    
-    edges.append(parent_label + '-' + left_label)
-    edges.extend(transform_to_ZhangShasha_tree(left, offset, left_treepos))
-    
-    edges.append(parent_label + '-' + right_label)
-    edges.extend(transform_to_ZhangShasha_tree(right, offset + left_span, right_treepos))
-    
-    return edges
-
-
-
-def eval_parse_prob(pt, model_probs, smoothing_prob = 0.0001, entropy = False):
-    probs = 1.0
-    
-    for subtree in pt.subtrees():
-        left_span = subtree[0]
-        right_span = subtree[1]
-        head_rel = subtree.node
-        left_rel = left_span.node if isinstance(left_span, Tree) else 'NO-REL'
-        right_rel = right_span.node if isinstance(right_span, Tree) else 'NO-REL'
-        rhs = left_rel + ' ' + right_rel
-
-        if rhs in model_probs and head_rel in model_probs[rhs]:
-            prob = model_probs[rhs][head_rel]
-        else:
-            prob = smoothing_prob
-        
-        #print head_rel + '->' + rhs, prob
-        if entropy:
-            probs += -prob * math.log(prob)
-        else:
-            probs *= prob
-    
-    if entropy:
-        return probs
-    else:
-        return - math.log(probs)
-
-def get_constituents(tree, multiEDU = False, rel = False, nuclearity = False, offset = 0):
-    constituents = []
-    
-    if not isinstance(tree, Tree) and multiEDU:
-        return []
-    else:
-        constituents.append(('NO-REL' if rel else None, '-' if nuclearity else None, offset, offset + 1))
-    
-    if not isinstance(tree, Tree):
-        return constituents
-    
-    left = tree[0]
-    span = 1 if not isinstance(left, Tree) else len(left.leaves())
-    right = tree[1]
-    
-    constituents.extend(get_constituents(left, multiEDU, rel, nuclearity, offset))
-    
-    constituents.extend(get_constituents(right, multiEDU, rel, nuclearity, offset + span))
-    
-    constituents.append((tree.node[ : -6] if rel else None, tree.node[-6 : ] if nuclearity else None, offset, offset + len(tree.leaves())))
-    
-    return constituents
-
-def get_constituent_accuracy(tree1, tree2, multiEDU = False, rel = False, nuclearity = False):
-    cons1 = set(get_constituents(tree1, multiEDU, rel, nuclearity))
-    cons2 = set(get_constituents(tree2, multiEDU, rel, nuclearity))
-    
-    return len(cons1.intersection(cons2)) * 100.0 / len(cons1)
-    
-    
-def eval_pt_distance(rst_edges, pt_edges):
-    p = subprocess.Popen(args = ["java", "-classpath", "../../tools/treedistance/treedistance.jar", 
-                                     "headliner.treedistance.TestZhangShasha",
-                                     ';'.join(rst_edges), ';'.join(pt_edges)], 
-                         stdout = subprocess.PIPE, 
-                         stderr = subprocess.STDOUT) # shell=True
-    outputlines = p.stdout.readlines()
-    ret_code = p.wait()
-    
-    dist = float(outputlines[-1].strip().split(':')[-1])
-    
-    return dist
-
-def is_within_sentence(pair):
-    if not isinstance(pair, Tree):
-        return True
-    
-    for i in range(len(pair.leaves()) - 1):
-        leaf = pair.leaves()[i]
-        if '<s>' in leaf or '<p>' in leaf:
-            return False
-        
-    return True
-
-
-def contains_stump(pair_treepos, stump_treepos):
-    #print 'stump_treepos:', stump_treepos
-    #print 'pair_treepos:', pair_treepos
-    if stump_treepos.startswith(pair_treepos):
-        return True
-    else:
-        return False        
-    
-    
-def get_adjacent_stump(prev_tree, i, scope, pos = 'L'):
-#    print 'i:', i, 'pos:', pos, 'scope:', scope
-    
-    if i < 1 and pos == 'L':
-        return None
-    elif i > len(prev_tree.leaves()) - 2 and pos == 'R':
-        return None
-    
-    stump_treepos = ''.join(str(x) for x in prev_tree.leaf_treeposition(i))
-    
-    #print i, len(self.prev_tree.leaves())
-    if pos == 'L':
-        treepos = prev_tree.treeposition_spanning_leaves(i - 1, i)
-    else:
-        treepos = prev_tree.treeposition_spanning_leaves(i + 1, i + 2)
-        
-    prev_pair = prev_tree[treepos]
-    #print prev_pair
-    prev_scope = is_within_sentence(prev_pair)
-    #print 'prev_pair:', prev_pair
-    #print 'prev_scope:', prev_scope
-    
-    if (not prev_scope and scope) or contains_stump(''.join(str(x) for x in treepos), stump_treepos):
-        return None
-    else:
-        while len(treepos) > 0:
-            parent_treepos = treepos[ : -1]
-            parent_prev_pair = prev_tree[parent_treepos]
-            parent_prev_scope = is_within_sentence(parent_prev_pair)
-            #print 'parent_prev_pair:', parent_prev_pair
-            #print 'parent_prev_scope:', parent_prev_scope
-            
-            if (not parent_prev_scope and scope) or contains_stump(''.join(str(x) for x in parent_treepos), stump_treepos):
-                break
-            
-            treepos = parent_treepos
-            
-#            if not parent_prev_scope and not scope:
-#                break
-            
-            
-    
-    prev_pair = prev_tree[treepos]
-    prev_scope = is_within_sentence(prev_pair)
-    #print 'prev_pair:', prev_pair
-    #print 'prev_scope:', prev_scope
-    
-    if prev_scope != scope:
-        return None
-    else:
-        return prev_pair
-    
-    
-def get_context_stumps(prev_tree, stumps, pair, i):
-    scope = is_within_sentence(pair)
-    #print 'scope:', scope
-    
-    tot = 0
-    for j in range(i):
-        stump = stumps[j]
-        if isinstance(stump, Tree):
-            tot += len(stump.leaves())
-        else:
-            tot += 1
-    
-    #print 'L:', pair[0]
-    prev_stump = get_adjacent_stump(prev_tree, tot, scope, 'L')
-    #print 'prev:', prev_stump
-    #print
-    
-    #print 'R:', pair[1]
-    next_stump = get_adjacent_stump(prev_tree, tot + (1 if not isinstance(pair, ParseTree) else len(pair.leaves())) - 1, scope, 'R')
-    #print 'next:', next_stump
-    #print
-            
-    return (prev_stump, next_stump)
-
-def copy_stump(stump, detach = False):
-    if isinstance(stump, Tree):
-        result = stump.__deepcopy__()
+def copy_subtree(subtree, detach = False):
+    if isinstance(subtree, Tree):
+        result = subtree.__deepcopy__()
         if detach:
             result._parent = None
     else:
-        result = stump
+        result = subtree
     
     return result
 
-def make_new_stump(label, stump1, stump2):
-#    stump1 = copy_stump(left, True)
-#    stump2 = copy_stump(right, True)
+def make_new_subtree(label, subtree1, subtree2, deepcopy = False):
+    if deepcopy:
+        stump1_clone = copy_subtree(subtree1, True)
+        stump2_clone = copy_subtree(subtree2, True)
+    else:
+        stump1_clone = subtree1
+        stump2_clone = subtree2
+        
+    if isinstance(stump1_clone, ParseTree):
+        stump1_clone._parent = None
+        
+    if isinstance(stump2_clone, ParseTree):
+        stump2_clone._parent = None
     
-    if isinstance(stump1, ParseTree):
-        stump1._parent = None
-        
-    if isinstance(stump2, ParseTree):
-        stump2._parent = None
-        
-    return ParseTree(label, [stump1, stump2])
+    return ParseTree(label, [stump1_clone, stump2_clone])
+#    return ParseTree(label, [stump1_clone, stump2_clone])
 
 
-def edu_in_sentence(cuts, start):
-    #print cuts
-    #print 'start:', start
-    tot = 0
-    for i in range(len(cuts)):
-        if start < tot + len(cuts[i]):
-#                print i, start - tot
-            return i, start - tot
-    
-        tot += len(cuts[i])
-    
-    return -1, -1
+def find_EDU_in_sentence_index(cuts, edu_index):
+    for (i, (sent_start_edu, sent_end_edu)) in enumerate(cuts):
+        if edu_index >= sent_start_edu and edu_index < sent_end_edu:
+            return i
 
-
-def align_edus_with_syntax_trees(input_edus, lexicalized_trees, segmented_text, special_chars = None):
-    edus_intervals_pairs = []
-    edus = []
-    
-    edus_offset = 0
-    for i in range(0, len(lexicalized_trees)):
-        t = lexicalized_trees[i]
-        
-        t_words = map(lambda x: t.unescape(x), t.leaves())
-        
-        l = j = k = m = 0
-        cur_edus_intervals = [0]
-        #cur_edu_words = input_edus[edus_offset].lower().split(' ')
-        cur_edu_words = input_edus[edus_offset].split(' ')
-        
-        #print 't_words:', t_words
-        #print 'cur_edu_words:', cur_edu_words
-        while l < len(t_words):
-            if t_words[l] == '.' and l > 0 and t_words[l - 1].endswith('.'):
-                l += 1
-                continue
-            
-            if special_chars:
-                prefix = replace_words(t_words[l][m : ], special_chars)
-            else:
-                prefix = t_words[l][m : ]
-                
-            #print 'l:', l, 'm:', m, 't_words[l][m : ]:', t_words[l][m : ], 'prefix:', prefix
-            #print 'k:', k, 'j:', j, 'cur_edu_words[j][k : ]:', cur_edu_words[j][k : ]
-            
-            if prefix == cur_edu_words[j][k : ]:
-                l += 1
-                j += 1
-                k = 0
-                m = 0
-            elif cur_edu_words[j][k : ].startswith(prefix):
-                k += len(prefix)
-                l += 1
-                m = 0
-                
-                if k == len(cur_edu_words[j]):
-                    k = 0
-                    j += 1
-            elif prefix.startswith(cur_edu_words[j][k : ]):
-                m += len(cur_edu_words[j][k : ])
-                if t_words[l][m] == ' ':
-                    m += 1
-                    
-                j += 1
-                k = 0
-                
-                if m >= len(t_words[l]):
-                    m = 0
-                    l += 1
-            else:
-                print 't_words:', t_words
-                print 'cur_edu_words:', cur_edu_words
-                print 'l:', l, 'm:', m, 't_words[l][m : ]:', t_words[l][m : ], 'prefix:', prefix
-                print 'k:', k, 'j:', j, 'cur_edu_words[j][k : ]:', cur_edu_words[j][k : ]
-                raise Exception('cannot align input edus with text file.')
-                
-            if j == len(cur_edu_words) or l == len(t_words):
-                edus_offset += 1
-                cur_edus_intervals.append(l)
-                if edus_offset == len(input_edus):
-                    if l == len(t_words):
-                        break
-                    else:
-                        raise Exception('cannot align input edus with text file.')
-                
-                k = 0
-                j = 0
-                #cur_edu_words = input_edus[edus_offset].lower().split(' ')
-                cur_edu_words = input_edus[edus_offset].split(' ')
-                #print cur_edu_words
-        
-        #print cur_edus_intervals
-        cur_edus = []
-        cur_edus_intervals_pairs = []
-                
-        for j in range(0, len(cur_edus_intervals) - 1):
-            cur_edus.append(t_words[cur_edus_intervals[j]:cur_edus_intervals[j+1]])
-            cur_edus_intervals_pairs.append((cur_edus_intervals[j], cur_edus_intervals[j+1]))
-            
-        # Add eventual paragraph boundary
-        #if segmented_text[i][1] == True:
-            #cur_edus[len(cur_edus) - 1].append("<p>") 
-        #print segmented_text[i][1]
-        cur_edus[len(cur_edus) - 1].append(segmented_text[i][1]) 
-        
-        #print 'cur_edus', cur_edus
-        edus_intervals_pairs.append(cur_edus_intervals_pairs)
-        edus.extend(cur_edus)
-    
-    return edus, edus_intervals_pairs
 
 def load_tree_from_file(filename, tokenize = False):
     def preprocess_leaf(leaf):
@@ -651,3 +239,140 @@ def load_tree_from_file(filename, tokenize = False):
         pt = ParseTree.parse(open(filename).read(), leaf_pattern = '_!.+?!_', parse_leaf = preprocess_leaf)
     
     return pt
+
+
+def is_punctuation(word):
+    if not word or len(word) == 0:
+        return False
+    
+    for i in range(len(word)):
+        if word[i] not in string.punctuation:
+            return False
+        
+    return True
+
+def simplify_tree(tree, start):
+    if not tree:
+        return None
+    
+#        print 'before', tree
+    
+    if not isinstance(tree, ParseTree):
+        t = ParseTree('leaf', [str(start + 1)])
+    else:
+        t = tree.__deepcopy__(None)
+#            print t
+        
+        L = simplify_tree(tree[0], start)
+        R = simplify_tree(tree[1], start + len(L.leaves()))
+        
+        t[0] = L
+        t[1] = R
+    
+#        print 'end', t
+#        print
+    
+    return t
+    
+def get_syntactic_subtrees(tree, start_word, end_word):
+#    print tree
+#    print 'start_word', start_word, 'end_word', end_word
+#    print
+
+    if tree.node == 'ROOT':
+        tree = tree[0]
+        
+    assert start_word >= 0 and end_word - start_word <= len(tree.leaves()) and start_word < end_word
+    
+    if len(tree.leaves()) == end_word - start_word:
+        return [tree]
+    
+    subtrees = []
+    start = 0
+    i = 0
+#    print len(tree)
+    while i < len(tree) - 1:
+        if start + len(tree[i].leaves()) > start_word:
+            break
+        
+        start += len(tree[i].leaves())
+        i += 1
+        
+    j = len(tree) - 1
+    end = len(tree.leaves())
+    while j > 0:
+        if end - len(tree[j].leaves()) < end_word:
+            break
+        end -= len(tree[j].leaves())
+        j -= 1
+    
+#    print 'i', i, 'j', j
+    for k in range(i, j + 1):
+        subtree = tree[k]
+        if k == i:
+            if k == j:
+                end1 = end_word - start
+            else:
+                end1 = len(subtree.leaves())
+            subtrees.extend(get_syntactic_subtrees(subtree, start_word - start, end1))
+        elif k == j:
+            if k == i:
+                start1 = start_word
+            else:
+                start1 = 0
+            subtrees.extend(get_syntactic_subtrees(subtree, start1, end_word - (end - len(subtree.leaves()))))
+        else:
+            subtrees.append(subtree)
+    
+    length = 0
+    for subtree in subtrees:
+        length += len(subtree.leaves())
+    
+    assert length == end_word - start_word
+
+    return subtrees
+
+ 
+def get_edu_entity_grid(entity_grid_filename):
+    grid = []
+    for line in open(entity_grid_filename).readlines()[1 : ]:
+        line = line.strip()
+        if line != '':
+            fields = line.split('\t')
+            grid.append(fields[1 : ])    
+    return grid
+
+def compute_edit_distance(sequence1, sequence2):
+    #print 'rst:' , rst_actions
+    #print 'pst:', pt_actions
+    
+    m = len(sequence1)
+    n = len(sequence2)
+    
+    matrix = {}
+    for i in range(m + 1):
+        #print matrix[i]
+        matrix[(i, 0)] = i
+        
+    for j in range(n + 1):
+        matrix[(0, j)] = j 
+    
+    for j in range(1, n + 1):
+        for i in range(1, m + 1):
+            if sequence1[i - 1] == sequence2[j - 1]:
+                substitution_cost = 0
+            else:
+                substitution_cost = 1
+
+            matrix[(i, j)] = min(matrix[(i - 1, j - 1)] + substitution_cost,
+                                 matrix[(i - 1, j)] + 1,
+                                 matrix[(i, j - 1)] + 1)
+            
+            if i > 1 and j > 1 and sequence1[i - 1] == sequence2[j - 2] and sequence1[i - 2] == sequence2[j - 1]:
+                matrix[(i, j)] = min(matrix[i - 2, j - 2] + substitution_cost,
+                                     matrix[(i, j)])
+    
+    #for i in range(1, m + 1):
+        #print rst_actions[i - 1], pt_actions[i - 1], matrix[(i, i)]
+    
+    return matrix[(m, n)]

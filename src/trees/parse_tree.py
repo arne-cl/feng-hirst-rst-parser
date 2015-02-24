@@ -1,8 +1,4 @@
-'''
-Created on 2013-02-18
 
-@author: Vanessa Wei Feng
-'''
 from nltk.tree import ParentedTree
 
 class ParseTree(ParentedTree):
