@@ -1,0 +1,14 @@
+* H wuz here -c=32.0|-g=0.0078125|
+* H wuz here -c=0.5|-g=0.0078125|
+* H wuz here -c=32.0|-g=0.5|
+* H wuz here -c=0.5|-g=0.5|
+* H wuz here -c=2048.0|-g=0.0078125|
+* H wuz here -c=2048.0|-g=0.5|
+* H wuz here -c=32.0|-g=0.0001220703125|
+* H wuz here -c=0.5|-g=0.0001220703125|
+* H wuz here -c=2048.0|-g=0.0001220703125|
+* H wuz here -c=0.125|-g=0.0078125|
+* H wuz here -c=0.125|-g=0.5|
+* H wuz here -c=0.125|-g=0.0001220703125|
+* H wuz here -c=32.0|-g=2.0|
+* H wuz here -c=0.5|-g=2.0|

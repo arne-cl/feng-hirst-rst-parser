@@ -1,0 +1,141 @@
+(Elaboration[N][S]
+  (Elaboration[N][S]
+    (Elaboration[N][S]
+      (Elaboration[N][S]
+        (Elaboration[N][S]
+          _!Friday , October 27 , 1989 <p>!_
+          (Contrast[N][N]
+            _!The key U.S. and foreign annual interest rates below are a guide to general levels!_
+            _!but do n't always represent actual transactions . <p>!_))
+        (Elaboration[N][S]
+          (Elaboration[N][S] _!PRIME RATE :!_ _!10 1/2 % . <s>!_)
+          _!The base rate on corporate loans at large U.S. money center commercial banks . <p>!_))
+      (Elaboration[N][S]
+        (Elaboration[N][S]
+          (Elaboration[N][S]
+            (Elaboration[N][S]
+              _!FEDERAL FUNDS :!_
+              _!8 3/4 % high , 8 11/16 % low , 8 5/8 % near closing bid , 8 11/16 %!_)
+            _!offered . <s>!_)
+          (same-unit[N][N]
+            _!Reserves!_
+            _!traded among commercial banks for overnight use in amounts of $ 1 million or more . <s>!_))
+        (Elaboration[N][S]
+          (Elaboration[N][S]
+            _!Source :!_
+            (same-unit[N][N]
+              (same-unit[N][N] _!Fulton Prebon!_ _!( U.S.A. )!_)
+              _!Inc. <p>!_))
+          (Elaboration[N][S]
+            (Elaboration[N][S]
+              (Elaboration[N][S] _!DISCOUNT RATE :!_ _!7 % . <s>!_)
+              _!The charge on loans to depository institutions by the New York Federal Reserve Bank . <p>!_)
+            (Elaboration[N][S]
+              (Elaboration[N][S]
+                _!CALL MONEY :!_
+                _!9 3/4 % to 10 % . <s>!_)
+              _!The charge on loans to brokers on stock exchange collateral . <p>!_)))))
+    (Elaboration[N][S]
+      (Elaboration[N][S]
+        _!COMMERCIAL PAPER placed directly by General Motors Acceptance Corp. :!_
+        _!8.50 % 30 to 44 days ; 8.25 % 45 to 65 days ; 8.375 % 66 to 89 days ; 8 % 90 to 119 days ; 7.875 % 120 to 149 days ; 7.75 % 150 to 179 days ; 7.50 % 180 to 270 days . <p>!_)
+      (Elaboration[N][S]
+        (Elaboration[N][S]
+          _!COMMERCIAL PAPER :!_
+          _!High-grade unsecured notes sold through dealers by major corporations in multiples of $ 1,000 :!_)
+        _!8.575 % 30 days ; 8.475 % 60 days ; 8.40 % 90 days . <p>!_)))
+  (Elaboration[N][S]
+    (Elaboration[N][S]
+      (Elaboration[N][S]
+        (Elaboration[N][S]
+          (Elaboration[N][S]
+            (Elaboration[N][S]
+              (Elaboration[N][S]
+                (Elaboration[N][S]
+                  (Elaboration[N][S]
+                    (Elaboration[N][S]
+                      _!CERTIFICATES OF DEPOSIT :!_
+                      _!8.09 % one month ; 8.04 % two months ; 8.03 % three months ; 7.96 % six months ; 7.92 % one year . <s>!_)
+                    _!Average of top rates paid by major New York banks on primary new issues of negotiable C.D.s , usually on amounts of $ 1 million and more . <s>!_)
+                  _!The minimum unit is $ 100,000 . <s>!_)
+                (Elaboration[N][S]
+                  _!Typical rates in the secondary market :!_
+                  _!8.55 % one month ; 8.50 % three months ; 8.40 % six months . <p>!_))
+              (Elaboration[N][S]
+                (Elaboration[N][S]
+                  _!BANKERS ACCEPTANCES :!_
+                  _!8.52 % 30 days ; 8.35 % 60 days ; 8.33 % 90 days ; 8.17 % 120 days ; 8.08 % 150 days ; 8 % 180 days . <s>!_)
+                (Elaboration[N][S]
+                  _!Negotiable , bank-backed business credit instruments!_
+                  _!typically financing an import order . <p>!_)))
+            (Elaboration[N][S]
+              (Elaboration[N][S]
+                _!LONDON LATE EURODOLLARS :!_
+                _!8 11/16 % to 8 9/16 % one month ; 8 5/8 % to 8 1/2 % two months ; 8 11/16 % to 8 9/16 % three months ; 8 9/16 % to 8 7/16 % four months ; 8 1/2 % to 8 3/8 % five months ; 8 7/16 % to 8 5/16 % six months . <p>!_)
+              (Elaboration[N][S]
+                (same-unit[N][N]
+                  (Summary[N][S]
+                    _!LONDON INTERBANK OFFERED RATES!_
+                    _!( LIBOR ) :!_)
+                  _!8 11/16 % one month ; 8 11/16 % three months ; 8 7/16 % six months ; 8 3/8 % one year . <s>!_)
+                (Elaboration[N][S]
+                  _!The average of interbank offered rates for dollar deposits in the London market!_
+                  _!based on quotations at five major banks . <p>!_))))
+          (Elaboration[N][S]
+            (Elaboration[N][S]
+              _!FOREIGN PRIME RATES :!_
+              _!Canada 13.50 % ; Germany 9 % ; Japan 4.875 % ; Switzerland 8.50 % ; Britain 15 % . <s>!_)
+            (Explanation[N][S]
+              _!These rate indications are n't directly comparable ;!_
+              _!lending practices vary widely by location . <p>!_)))
+        (Elaboration[N][S]
+          (Elaboration[N][S]
+            _!TREASURY BILLS :!_
+            (Elaboration[N][S]
+              _!Results of the Monday , October 23 , 1989 , auction of short-term U.S. government bills ,!_
+              _!sold at a discount from face value in units of $ 10,000 to $ 1 million :!_))
+          _!7.52 % 13 weeks ; 7.50 % 26 weeks . <p>!_))
+      (Elaboration[N][S]
+        (Elaboration[N][S]
+          (Elaboration[N][S]
+            (Elaboration[N][S]
+              _!FEDERAL HOME LOAN MORTGAGE CORP.!_
+              _!( Freddie Mac ) : <s>!_)
+            _!Posted yields on 30-year mortgage commitments for delivery within 30 days . <s>!_)
+          (Attribution[N][S]
+            (Elaboration[N][S]
+              (same-unit[N][N]
+                _!9.80 % ,!_
+                _!standard conventional fixed-rate mortgages ;!_)
+              _!7.875 % , 2 % rate capped one-year adjustable rate mortgages . <s>!_)
+            (Elaboration[N][S]
+              _!Source :!_
+              _!Telerate Systems Inc. <p>!_)))
+        (Attribution[N][S]
+          (Elaboration[N][S]
+            (Elaboration[N][S]
+              (Summary[N][S]
+                _!FEDERAL NATIONAL MORTGAGE ASSOCIATION!_
+                _!( Fannie Mae ) : <s>!_)
+              (same-unit[N][N]
+                (Elaboration[N][S]
+                  _!Posted yields on 30 year mortgage commitments for delivery within 30 days!_
+                  _!( priced at par )!_)
+                (same-unit[N][N]
+                  _!9.75 % ,!_
+                  _!standard conventional fixed-rate mortgages ;!_)))
+            _!8.70 % , 6/2 rate capped one-year adjustable rate mortgages . <s>!_)
+          (Elaboration[N][S]
+            _!Source :!_
+            _!Telerate Systems Inc. <p>!_))))
+    (Elaboration[N][S]
+      (Elaboration[N][S]
+        _!MERRILL LYNCH READY ASSETS TRUST :!_
+        _!8.65 % . <s>!_)
+      (same-unit[N][N]
+        _!Annualized average rate of return!_
+        (same-unit[N][N]
+          _!after expenses for the past 30 days ;!_
+          (Elaboration[N][S]
+            _!not a forecast!_
+            _!of future returns . <p>!_))))))
