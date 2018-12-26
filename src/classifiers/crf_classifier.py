@@ -18,26 +18,31 @@ class CRFClassifier:
         self.classifier_cmd = '%s/crfsuite-stdin tag -pi -m %s -' % (paths.CRFSUITE_PATH, 
 							 os.path.join(self.model_path, self.model_fname))
 #        print self.classifier_cmd
-        self.classifier = subprocess.Popen(self.classifier_cmd, shell = True, stdin = subprocess.PIPE, stderr = subprocess.PIPE)
+        self.classifier = subprocess.Popen(self.classifier_cmd, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         
         if self.classifier.poll():
             raise OSError('Could not create classifier subprocess, with error info:\n%s' % self.classifier.stderr.readline())
         
         #self.cnt = 0
-            
 
     def classify(self, vectors):
-#        print '\n'.join(vectors) + "\n\n"
+        """
+        Parameters
+        ----------
+        vectors : list of str
+            list of features, e.g. 'LEAF\tNum_EDUs=1\r'
         
+        Returns
+        -------
+        seq_prob : float
+            sequence probability
+        predictions : list of (str, float) tuples
+            list of predition tuples (label, probability)
+        """
         self.classifier.stdin.write('\n'.join(vectors) + "\n\n")
-        
-        lines = []
-        line = self.classifier.stderr.readline()
-        while (line.strip() != ''):
-#            print line
-            lines.append(line)
-            line = self.classifier.stderr.readline()
-        
+        self.classifier.stdin.close()
+
+        lines = self.classifier.stdout.readlines()
         
         if self.classifier.poll():
             raise OSError('crf_classifier subprocess died')
@@ -45,10 +50,8 @@ class CRFClassifier:
         predictions = []
         for line in lines[1 : ]:
             line = line.strip()
-#            print line
             if line != '':
                 fields = line.split(':')
-#                print fields
                 label = fields[0]
                 prob = float(fields[1])
                 predictions.append((label, prob))
