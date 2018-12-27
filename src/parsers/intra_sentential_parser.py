@@ -62,7 +62,7 @@ class IntraSententialParser(BaseParser):
                 if c.get_num_edus() > 1:
                     predicted_label = mc_predictions[k]
                     
-                    c.parse_subtree.node = predicted_label
+                    c.parse_subtree.set_label(predicted_label)
                     if self.verbose:
                         print 'Relabling'
                         print 'L', c.left_child
@@ -87,7 +87,7 @@ class IntraSententialParser(BaseParser):
                 c2 = c.right_child
                 
                 predicted_label = mc_predictions[k]
-                stumps[k].node = predicted_label
+                stumps[k].set_label(predicted_label)
                 if self.verbose:
                     print 'Relabling'
                     print 'L', c1

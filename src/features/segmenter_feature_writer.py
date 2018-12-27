@@ -53,7 +53,7 @@ class SegmenterFeatureWriter:
             treepos = treepos[ : -1]
         
         ancestor_subtree = tree[treepos]
-        self.features.add('Largest_Subtree_Top_Tag=%s_Unit=%d@%d' % (ancestor_subtree.node, unit, position))
+        self.features.add('Largest_Subtree_Top_Tag=%s_Unit=%d@%d' % (ancestor_subtree.label(), unit, position))
         self.features.add('Largest_Subtree_Depth=%s_Unit=%d@%d' % (len(treepos), unit, position))
         
         if len(treepos) < len(token.get_treepos()):
@@ -64,7 +64,7 @@ class SegmenterFeatureWriter:
 #            if ancestor_subtree.head == token.id - 1:
 #                self.features.add('Is_Head_in_Largest_Subtree_Unit=%d@%d' % (unit, position))
         
-            production = '%s->%s' % (ancestor_subtree.node, '#'.join(str(x) for x in nltk.tree._child_names(ancestor_subtree)))
+            production = '%s->%s' % (ancestor_subtree.label(), '#'.join(str(x) for x in nltk.tree._child_names(ancestor_subtree)))
             self.features.add('Largest_Subtree_Production=%s_Unit=%d@%d' % (production, unit, position))
 #            print 'treepos', treepos
 #            print 'token_treepos', token.get_treepos()
@@ -175,7 +175,7 @@ class SegmenterFeatureWriter:
         self.features.add('Subtrees_to_Neighbouring_Boundary=%d_Unit%d@%d' % (len(subtrees), unit, position))
         subtree_top_tags = []
         for subtree in subtrees:
-            subtree_top_tags.append(subtree.node)
+            subtree_top_tags.append(subtree.label())
 #        self.features.add('Subtree_Tags_to_Neighbouring_Boundary=%s_Unit%d@%d' % ('#'.join(subtree_top_tags), unit, position))
         
 #        print start, end
@@ -187,9 +187,9 @@ class SegmenterFeatureWriter:
             ancestor_subtree = tree[ancestor_treepos[ : -1]]
 #        print ancestor_subtree
 
-        self.features.add('Ancestor_Subtree_Tag_Neighbouring_Boundary=%s_Unit%d@%d' % (ancestor_subtree.node, unit, position))
-        production = '%s->%s' % (ancestor_subtree.node, '#'.join(subtree_top_tags))
-#        production = '%s->%s' % (ancestor_subtree.node, '#'.join(str(x) for x in nltk.tree._child_names(ancestor_subtree)))
+        self.features.add('Ancestor_Subtree_Tag_Neighbouring_Boundary=%s_Unit%d@%d' % (ancestor_subtree.label(), unit, position))
+        production = '%s->%s' % (ancestor_subtree.label(), '#'.join(subtree_top_tags))
+#        production = '%s->%s' % (ancestor_subtree.label(), '#'.join(str(x) for x in nltk.tree._child_names(ancestor_subtree)))
         self.features.add('Ancestor_Subtree_Production_Neighbouring_Boundary=%s_Unit%d@%d' % (production, unit, position))
         
         

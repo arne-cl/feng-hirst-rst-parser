@@ -108,7 +108,7 @@ class MultiSententialParser(BaseParser):
                 c2 = c.right_child
                 
                 predicted_label = max_prob_predictions[k]
-                c.parse_subtree.node = predicted_label
+                c.parse_subtree.set_label(predicted_label)
                         
                 if self.verbose:
                     print 'Relabling'

@@ -104,7 +104,7 @@ class Constituent:
         if not isinstance(t, ParseTree):
             return 'NO-REL'
         else:
-            return t.node
+            return t.label()
     
     def get_num_tokens(self):
         if self.get_num_edus() == 1:
@@ -127,7 +127,7 @@ class Constituent:
         if not isinstance(self.parse_subtree, ParseTree):
             return 'NO-REL'
         else:
-            return self.parse_subtree.node
+            return self.parse_subtree.label()
     
     
     def get_ngram(self, n):
@@ -186,7 +186,7 @@ class Constituent:
         ngrams = []
         for i in range(start, end):
             try:
-                ngrams.append(t[t.leaf_treeposition(i)[ : -1]].node)
+                ngrams.append(t[t.leaf_treeposition(i)[ : -1]].label())
             except Exception, e:
                 print self.l_start, self.l_end, self.r_end
                 print self.parse_subtree
@@ -220,16 +220,16 @@ class Constituent:
             L = t[0]
             l_num_edus = 1 if not isinstance(L, ParseTree) else len(L.leaves())
             
-            if t.node[-5] == 'N':
+            if t.label()[-5] == 'N':
                 result.extend(self.traverse_tree(L, start_edu))
                 
             R = t[1]
-            if t.node[-2] == 'N':
+            if t.label()[-2] == 'N':
                 result.extend(self.traverse_tree(R, start_edu + l_num_edus))
             
 #            if len(result) == 0:
 #                print t
-#                print t.node
+#                print t.label()
             
             return result
         

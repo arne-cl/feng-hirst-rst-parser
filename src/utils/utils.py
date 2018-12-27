@@ -165,19 +165,19 @@ def print_SGML_tree(parse_tree, offset = 1, depth = 0, status = None, relation =
                                       
     left = parse_tree[0]
     #print left
-    left_status = 'Nucleus' if parse_tree.node[-5] == 'N' else 'Satellite'
+    left_status = 'Nucleus' if parse_tree.label()[-5] == 'N' else 'Satellite'
     right = parse_tree[1]
     #print right
-    right_status = 'Nucleus' if parse_tree.node[-2] == 'N' else 'Satellite'
+    right_status = 'Nucleus' if parse_tree.label()[-2] == 'N' else 'Satellite'
 
     if left_status[0] == 'S' and right_status[0] == 'N':
-        left_relation = replace_words(parse_tree.node[ : -6], joty_script_mapping)
+        left_relation = replace_words(parse_tree.label()[ : -6], joty_script_mapping)
         right_relation = 'span'
     elif right_status[0] == 'S' and left_status[0] == 'N':
-        right_relation = replace_words(parse_tree.node[ : -6], joty_script_mapping)
+        right_relation = replace_words(parse_tree.label()[ : -6], joty_script_mapping)
         left_relation = 'span'
     else:
-        left_relation = replace_words(parse_tree.node[ : -6], joty_script_mapping)
+        left_relation = replace_words(parse_tree.label()[ : -6], joty_script_mapping)
         right_relation = left_relation
         
     out += print_SGML_tree(left, offset, depth + 1, left_status, left_relation)
@@ -279,7 +279,7 @@ def get_syntactic_subtrees(tree, start_word, end_word):
 #    print 'start_word', start_word, 'end_word', end_word
 #    print
 
-    if tree.node == 'ROOT':
+    if tree.label() == 'ROOT':
         tree = tree[0]
         
     assert start_word >= 0 and end_word - start_word <= len(tree.leaves()) and start_word < end_word

@@ -6,7 +6,7 @@ class ParseTree(ParentedTree):
         if T is None:
             T = self
         if isinstance(T, ParseTree):
-            return T.node + '(' + self.get_hash(T[0]) + ',' + self.get_hash(T[1]) + ')'
+            return T.label() + '(' + self.get_hash(T[0]) + ',' + self.get_hash(T[1]) + ')'
         else:
             return str(len(T))
     
