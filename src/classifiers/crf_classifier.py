@@ -57,7 +57,9 @@ class CRFClassifier:
                 predictions.append((label, prob))
         
         seq_prob = float(lines[0].split('\t')[1])
-        
+
+        # re-create classifier (because we had to close STDIN earlier)
+        self.classifier = subprocess.Popen(self.classifier_cmd, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         return seq_prob, predictions
     
 
