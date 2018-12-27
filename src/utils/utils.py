@@ -236,7 +236,7 @@ def load_tree_from_file(filename, tokenize = False):
     if filename.endswith('.dis'):
         pt = rst_lib.load_tree(filename)
     elif filename.endswith('.tree'):
-        pt = ParseTree.parse(open(filename).read(), leaf_pattern = '_!.+?!_', parse_leaf = preprocess_leaf)
+        pt = ParseTree.fromstring(open(filename).read(), leaf_pattern = '_!.+?!_', parse_leaf = preprocess_leaf)
     
     return pt
 
