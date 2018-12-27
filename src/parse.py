@@ -214,7 +214,7 @@ class DiscourseParser():
                     for i in range(len(doc.edus)):
                         pt.__setitem__(pt.leaf_treeposition(i), '_!%s!_' % ' '.join(doc.edus[i]))
                     
-                    out = pt.pprint()
+                    out = pt.pformat()
                     print 'Output tree building result to %s.' % outfname
                     f_o = open(outfname, "w")
                     f_o.write(out)
