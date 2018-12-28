@@ -153,7 +153,7 @@ class DiscourseParser():
             
             print
         
-            if options.verbose:
+            if self.verbose:
                 for e in doc.edus:
                     print e
             
@@ -302,14 +302,13 @@ def main(options, args):
         parser.unload()
         
     except Exception, e:
-        print traceback.print_exc()
         if not parser is None:
             parser.unload()
 
+        raise Exception, traceback.print_exc()
 
 
-v = '1.0'
-if __name__ == '__main__':
+def parse_args():
     usage = "Usage: %prog [options] input_file/dir"
     
     optParser = OptionParser(usage=usage, version="%prog " + v)
@@ -334,14 +333,16 @@ if __name__ == '__main__':
     optParser.add_option("-e", "--save",
                          action="store_true", dest="save_preprocessed_doc", default=False,
                          help="Save preprocessed document into serialized file for future use.")
-    
-    
-       
+
     (options, args) = optParser.parse_args()
     if len(args) == 0:
         optParser.print_help()
         sys.exit(1)
-                
-        
+
+    return options, args
+
+v = '1.0'
+if __name__ == '__main__':
+    options, args = parse_args()
     main(options, args)
     
