@@ -85,6 +85,8 @@ class DiscourseParser():
         
     
     def parse(self, filename):
+        result = None
+
         if not os.path.exists(filename):
             print '%s does not exist.' % filename
             return
@@ -214,6 +216,7 @@ class DiscourseParser():
                     for i in range(len(doc.edus)):
                         pt.__setitem__(pt.leaf_treeposition(i), '_!%s!_' % ' '.join(doc.edus[i]))
                     
+                    result = pt
                     out = pt.pformat()
                     print 'Output tree building result to %s.' % outfname
                     f_o = open(outfname, "w")
@@ -232,10 +235,12 @@ class DiscourseParser():
             raise e
     
         print '==================================================='
-        #return dists#, probs
+        return result
 
 def main(options, args):
     parser = None
+    results = []
+
     try:
         if options.output_dir:
             output_dir = args[0]
@@ -292,7 +297,8 @@ def main(options, args):
             print 'Parsing %s, progress: %.2f (%d out of %d)' % (filename, i * 100.0 / len(files), i, len(files))
                     
             try:
-                parser.parse(filename)
+                result = parser.parse(filename)
+                results.append(result)
                 
                 parser.log_writer.write('===================================================')
             except Exception, e:
@@ -300,6 +306,7 @@ def main(options, args):
                 raise e
            
         parser.unload()
+        return results
         
     except Exception, e:
         if not parser is None:
