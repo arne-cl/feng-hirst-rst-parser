@@ -14,7 +14,8 @@ import os
 import sys
 
 from nltk.tree import ParentedTree
-from parse import parse_args, main
+from parse import parse_args
+from parse import main as feng_main
 
 
 class ParserException(Exception):
@@ -29,17 +30,13 @@ def get_parser_stdout(parser_stdout_filepath):
     sys.stdout = open(parser_stdout_filepath, "w")
     return stdout_str
 
-
-
-
 def get_output_filepath(args):
     """Returns the path to the output file of the parser."""
     input_filepath = args[0]
     input_filename = os.path.basename(input_filepath)
     return os.path.join("../texts/results", "{}.tree".format(input_filename))
 
-
-if __name__ == "__main__":
+def main():
     parser_stdout_filepath = 'parser.stdout'
 
     options, args = parse_args()
@@ -57,7 +54,7 @@ if __name__ == "__main__":
     old_stdout = sys.stdout
     sys.stdout = open(parser_stdout_filepath, "w")
     try:
-        results = main(options, args)
+        results = feng_main(options, args)
         assert len(results) == 1 and isinstance(results[0], ParentedTree), \
             ("Expected one parse tree as a result, but got: {0}.\n"
              "Parser STDOUT was:\n{1}").format(
@@ -68,3 +65,8 @@ if __name__ == "__main__":
 
     parse_tree = results[0].__repr__() + "\n"
     sys.stdout.write(parse_tree)
+    return parse_tree
+
+
+if __name__ == "__main__":
+    main()
