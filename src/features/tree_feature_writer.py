@@ -105,7 +105,7 @@ class CRFTreeFeatureWriter:
                 
             l_ancestor_subtree = t[l_ancestor_pos]
             
-            self.features.add('Top_syntactic_tag_Unit1=%s@%d' % (l_ancestor_subtree.node, position))
+            self.features.add('Top_syntactic_tag_Unit1=%s@%d' % (l_ancestor_subtree.label(), position))
             
             if len(l_ancestor_subtree.leaves()) == l_end_word - l_start_word:
                 self.features.add('Valid_syntax_subtree_Unit1@%d' % position)
@@ -114,12 +114,12 @@ class CRFTreeFeatureWriter:
             self.features.add('Num_Syntax_subtrees_Unit1=%d@%d' % (len(l_subtrees), position))
             
             if len(l_subtrees) == 1:
-                self.features.add('Top_Syntax_tag_Unit1=%s@%d' % (l_subtrees[0].node, position))
+                self.features.add('Top_Syntax_tag_Unit1=%s@%d' % (l_subtrees[0].label(), position))
                 
 
             l_subtree_top_tags = []
             for (i, subtree) in enumerate(l_subtrees):
-                l_subtree_top_tags.append(subtree.node)
+                l_subtree_top_tags.append(subtree.label())
 
             l_subtrees_top_tags.append(l_subtree_top_tags)
         else:
@@ -136,7 +136,7 @@ class CRFTreeFeatureWriter:
                 
             r_ancestor_subtree = t[r_ancestor_pos]
             
-            self.features.add('Top_syntactic_tag_Unit2=%s@%d' % (r_ancestor_subtree.node, position))
+            self.features.add('Top_syntactic_tag_Unit2=%s@%d' % (r_ancestor_subtree.label(), position))
             
             if len(r_ancestor_subtree.leaves()) == r_end_word - r_start_word:
                 self.features.add('Valid_syntax_subtree_Unit2@%d' % position)
@@ -145,11 +145,11 @@ class CRFTreeFeatureWriter:
             self.features.add('Num_Syntax_subtrees_Unit2=%d@%d' % (len(r_subtrees), position))
             
             if len(r_subtrees) == 1:
-                self.features.add('Top_Syntax_tag_Unit2=%s@%d' % (r_subtrees[0].node, position))
+                self.features.add('Top_Syntax_tag_Unit2=%s@%d' % (r_subtrees[0].label(), position))
                 
             r_subtree_top_tags = []
             for (i, subtree) in enumerate(r_subtrees):
-                r_subtree_top_tags.append(subtree.node)
+                r_subtree_top_tags.append(subtree.label())
 
             r_subtrees_top_tags.append(r_subtree_top_tags)
         else:

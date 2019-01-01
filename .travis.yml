@@ -1,0 +1,10 @@
+sudo: required
+
+services:
+  - docker
+
+install:
+  - docker build -t feng-hirst .
+
+script:
+  - docker run --entrypoint=pytest -ti feng-hirst test_feng.py

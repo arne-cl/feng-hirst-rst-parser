@@ -77,7 +77,7 @@ class Preprocesser:
         sentence = Sentence(len(doc.sentences), raw_text + ('<s>' if not end_of_para else '<P>'), doc)
         parse_tree_str, deps_str = self.parse_single_sentence(raw_text)
 
-        parse = LexicalizedTree.parse(parse_tree_str, leaf_pattern = '(?<=\\s)[^\)\(]+')  
+        parse = LexicalizedTree.fromstring(parse_tree_str, leaf_pattern = '(?<=\\s)[^\)\(]+')  
         sentence.set_unlexicalized_tree(parse)
         
         for (token_id, te) in enumerate(parse.leaves()):

@@ -62,7 +62,7 @@ class Sentence(BaseRepresentation):
 
         ngrams = []
         for i in range(start, end):
-            ngrams.append(self.parse_tree[self.parse_tree.leaf_treeposition(i)[ : -1]].node)
+            ngrams.append(self.parse_tree[self.parse_tree.leaf_treeposition(i)[ : -1]].label())
         
         return ngrams
     

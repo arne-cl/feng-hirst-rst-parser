@@ -123,7 +123,7 @@ def filter_ngrams(ngrams, threshold = 1, max_threshold = 0):
 
 def extract_relations(T):
     if isinstance(T, Tree):
-        ret = [T.node]
+        ret = [T.label()]
         for child in T:
             ret += extract_relations(child)
         return ret
@@ -161,23 +161,23 @@ def traverse_tree_path(T, fn, path_len, arg = None, cur_path = []):
 def convert_tree(t):
     label = None
     
-    if t.node == "text":
+    if t.label() == "text":
         return slice_text(t[0])
     
     children = []
     for elem in t:
-        if not isinstance(elem, Tree) or (elem.node != "span" and elem.node != "rel2par" and elem.node != "leaf"):
+        if not isinstance(elem, Tree) or (elem.label() != "span" and elem.label() != "rel2par" and elem.label() != "leaf"):
             children.append(elem)
             if isinstance(elem, Tree) and (label is None or label[0] == "span"):
                 for sub in (s for s in elem if isinstance(s, Tree)):
-                    if sub.node == "rel2par":
+                    if sub.label() == "rel2par":
                         label = sub
                         break;
         
     if len(children) == 1:
         return convert_tree(children[0])
 
-    label_rel = rel2class[label[0].lower()] + "[" + children[0].node[0:1] + "][" + children[1].node[0:1] + "]"
+    label_rel = rel2class[label[0].lower()] + "[" + children[0].label()[0:1] + "][" + children[1].label()[0:1] + "]"
         
     if len(children) > 2:
         for item in children[1:]:
@@ -207,9 +207,9 @@ def get_main_edus(T, pos = []):
         return [pos];
     
     ret = [];
-    if T.node[-5:-4] == 'N':
+    if T.label()[-5:-4] == 'N':
         ret += get_main_edus(T[0], pos + [0])
-    if T.node[-2:-1] == 'N':
+    if T.label()[-2:-1] == 'N':
         ret += get_main_edus(T[1], pos + [1])
 #    print T
 #    print ret
@@ -217,10 +217,10 @@ def get_main_edus(T, pos = []):
     return ret
 
 def is_left_nucleus(T):
-    return isinstance(T, Tree) and T.node[-5:-4] == 'N'
+    return isinstance(T, Tree) and T.label()[-5:-4] == 'N'
 
 def is_right_nucleus(T):
-    return isinstance(T, Tree) and T.node[-2:-1] == 'N'
+    return isinstance(T, Tree) and T.label()[-2:-1] == 'N'
 
 def filter_lexical_head(head_str):
     if not re.sub('^[0-9\\./\\\\,]*', '', head_str):

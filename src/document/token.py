@@ -48,12 +48,12 @@ class Token:
         if not self.pos:
             if self.sentence.parse_tree is not None:
                 t = self.sentence.parse_tree
-                self.pos = t[self.get_treepos()[ : -1]].node
+                self.pos = t[self.get_treepos()[ : -1]].label()
                 
             elif self.sentence.unlexicalized_parse_tree is not None:
                 t = self.sentence.unlexicalized_parse_tree
             
-                self.pos = t[self.get_treepos()[ : -1]].node
+                self.pos = t[self.get_treepos()[ : -1]].label()
                 
         return self.pos
     

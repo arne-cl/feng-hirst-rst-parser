@@ -18,7 +18,7 @@ def get_parsed_trees_from_string(tree_strings):
         line = line.strip()
         #print line
         if line != '':
-            parsed_trees.append(LexicalizedTree.parse(line, leaf_pattern = '(?<=\\s)[^\)\(]+'))
+            parsed_trees.append(LexicalizedTree.fromstring(line, leaf_pattern = '(?<=\\s)[^\)\(]+'))
    
     return parsed_trees
 

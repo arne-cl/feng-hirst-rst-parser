@@ -85,6 +85,8 @@ class DiscourseParser():
         
     
     def parse(self, filename):
+        result = None
+
         if not os.path.exists(filename):
             print '%s does not exist.' % filename
             return
@@ -153,7 +155,7 @@ class DiscourseParser():
             
             print
         
-            if options.verbose:
+            if self.verbose:
                 for e in doc.edus:
                     print e
             
@@ -214,7 +216,8 @@ class DiscourseParser():
                     for i in range(len(doc.edus)):
                         pt.__setitem__(pt.leaf_treeposition(i), '_!%s!_' % ' '.join(doc.edus[i]))
                     
-                    out = pt.pprint()
+                    result = pt
+                    out = pt.pformat()
                     print 'Output tree building result to %s.' % outfname
                     f_o = open(outfname, "w")
                     f_o.write(out)
@@ -232,10 +235,12 @@ class DiscourseParser():
             raise e
     
         print '==================================================='
-        #return dists#, probs
+        return result
 
 def main(options, args):
     parser = None
+    results = []
+
     try:
         if options.output_dir:
             output_dir = args[0]
@@ -292,7 +297,8 @@ def main(options, args):
             print 'Parsing %s, progress: %.2f (%d out of %d)' % (filename, i * 100.0 / len(files), i, len(files))
                     
             try:
-                parser.parse(filename)
+                result = parser.parse(filename)
+                results.append(result)
                 
                 parser.log_writer.write('===================================================')
             except Exception, e:
@@ -300,16 +306,16 @@ def main(options, args):
                 raise e
            
         parser.unload()
+        return results
         
     except Exception, e:
-        print traceback.print_exc()
         if not parser is None:
             parser.unload()
 
+        raise Exception, traceback.print_exc()
 
 
-v = '1.0'
-if __name__ == '__main__':
+def parse_args():
     usage = "Usage: %prog [options] input_file/dir"
     
     optParser = OptionParser(usage=usage, version="%prog " + v)
@@ -334,14 +340,16 @@ if __name__ == '__main__':
     optParser.add_option("-e", "--save",
                          action="store_true", dest="save_preprocessed_doc", default=False,
                          help="Save preprocessed document into serialized file for future use.")
-    
-    
-       
+
     (options, args) = optParser.parse_args()
     if len(args) == 0:
         optParser.print_help()
         sys.exit(1)
-                
-        
+
+    return options, args
+
+v = '1.0'
+if __name__ == '__main__':
+    options, args = parse_args()
     main(options, args)
     

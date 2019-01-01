@@ -43,7 +43,7 @@ class LexicalizedTree(ParseTree):
     def get_syntactic_tag(self, pos):
         if not isinstance(self[pos], LexicalizedTree):
             return self.get_syntactic_tag(pos[:-1])
-        return self[pos].node
+        return self[pos].label()
     
     def remove_null_elements(self):
         to_delete = []
@@ -51,7 +51,7 @@ class LexicalizedTree(ParseTree):
         for i in range(0, len(self.leaves())):
             pos = self.leaf_treeposition(i)[0:-1]
             #print 'pos', pos, self[pos]
-            if self[pos].node == '-NONE-':
+            if self[pos].label() == '-NONE-':
                 to_delete += [pos]
         
         for pos in reversed(to_delete):
@@ -162,12 +162,12 @@ class LexicalizedTree(ParseTree):
             head_str = ''
 
         #print 'head_str:', head_str
-        #print 'node:', self.node
-        if isinstance(self.node, basestring):
-            return '%s%s%s%s %s%s' % (parens[0], self.node, head_str, nodesep, 
+        #print 'node:', self.label()
+        if isinstance(self.label(), basestring):
+            return '%s%s%s%s %s%s' % (parens[0], self.label(), head_str, nodesep, 
                                     string.join(childstrs), parens[1])
         else:
-            return '%s%r%s%s %s%s' % (parens[0], self.node, head_str, nodesep, 
+            return '%s%r%s%s %s%s' % (parens[0], self.label(), head_str, nodesep, 
                                     string.join(childstrs), parens[1])
 
     def pprint(self, margin=70, indent=0, nodesep='', parens='()', quotes=False): 
@@ -185,10 +185,10 @@ class LexicalizedTree(ParseTree):
         else:
             head_str = '' + str(self.head)
             
-        if isinstance(self.node, basestring):
-            s = '%s%s%s%s' % (parens[0], self.node, head_str, nodesep) 
+        if isinstance(self.label(), basestring):
+            s = '%s%s%s%s' % (parens[0], self.label(), head_str, nodesep) 
         else: 
-            s = '%s%r%s%s' % (parens[0], self.node, head_str, nodesep) 
+            s = '%s%r%s%s' % (parens[0], self.label(), head_str, nodesep) 
         for child in self: 
             if isinstance(child, Tree): 
                 s += '\n'+' '*(indent+2)+child.pprint(margin, indent+2, 
