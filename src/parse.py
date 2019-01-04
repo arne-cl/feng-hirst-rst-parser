@@ -8,9 +8,10 @@ from segmenters.crf_segmenter import CRFSegmenter
 from treebuilder.build_tree_CRF import CRFTreeBuilder
 
 from optparse import OptionParser
-
+from copy import deepcopy
 import paths
 import os.path
+import re
 import sys
 from document.doc import Document
 import time
@@ -21,6 +22,9 @@ from logs.log_writer import LogWriter
 from prep.preprocesser import Preprocesser
 
 import utils.serialize
+
+PARA_END_RE = re.compile(r' (<P>|<s>)$')
+
 
 class DiscourseParser():
     def __init__(self, options, output_dir = None, 
@@ -207,16 +211,17 @@ class DiscourseParser():
     #           Unescape the parse tree
                 if pt:
                     doc.discourse_tree = pt
+                    result = deepcopy(pt)
                     treeBuildEnd = time.time()
                     
-    #                print out
                     print 'Finished tree building in %.2f seconds.' % (treeBuildEnd - treeBuildStart)  
                     self.log_writer.write('Finished tree building in %.2f seconds.' % (treeBuildEnd - treeBuildStart))
                     
                     for i in range(len(doc.edus)):
-                        pt.__setitem__(pt.leaf_treeposition(i), '_!%s!_' % ' '.join(doc.edus[i]))
+                        edu_str = ' '.join(doc.edus[i])
+                        pt.__setitem__(pt.leaf_treeposition(i), '_!%s!_' % edu_str) # parse tree with escape symbols
+                        result.__setitem__(pt.leaf_treeposition(i), PARA_END_RE.sub('', edu_str)) # parse tree without escape symbols
                     
-                    result = pt
                     out = pt.pformat()
                     print 'Output tree building result to %s.' % outfname
                     f_o = open(outfname, "w")

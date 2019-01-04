@@ -4,9 +4,8 @@ RUN apk update && \
     apk add git py2-setuptools py2-pip build-base openjdk8-jre perl && \
     pip install nltk==3.4 pytest
 
-# TODO: merge develop branch
 WORKDIR /opt
-RUN git clone --single-branch --branch develop https://github.com/arne-cl/feng-hirst-rst-parser.git
+RUN git clone https://github.com/arne-cl/feng-hirst-rst-parser.git
 
 # The Feng's original README claims that liblbfgs is included, but it's not
 WORKDIR /opt/feng-hirst-rst-parser/tools/crfsuite
