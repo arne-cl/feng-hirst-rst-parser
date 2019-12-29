@@ -9,6 +9,9 @@ dockerized the application, added some end-to-end tests and changed its
 output format to make it simpler to parse (e.g. by [discoursegraphs](https://github.com/arne-cl/discoursegraphs)
 or the [rst-converter-service](https://arne-cl@github.com/NLPbox/rst-converter-service)).
 
+If you want to run the parser as a web service, have a look at
+[nlpbox/feng-hirst-service](https://github.com/nlpbox/feng-hirst-service).
+
 The [original source code](http://www.cs.toronto.edu/~weifeng/software.html)
 is still part of this repository. (The version published in Feng and Hirst (2012)
 is tagged `1.01`, Feng and Hirst (2014) is tagged `2.01`—both are
