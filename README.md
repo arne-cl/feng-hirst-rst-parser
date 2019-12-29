@@ -28,10 +28,6 @@ docker build -t feng-hirst .
 
 # Usage
 
-```
-docker run --entrypoint=pytest -ti feng-hirst test_feng.py
-```
-
 If your input text is in `/tmp/input.txt`:
 
 ```
