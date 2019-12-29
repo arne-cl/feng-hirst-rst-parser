@@ -1,16 +1,20 @@
 # feng-hirst-rst-parser
 
+[![Travis Build Status](https://travis-ci.org/arne-cl/feng-hirst-rst-parser.svg?branch=master)](https://travis-ci.org/arne-cl/feng-hirst-rst-parser)
+[![Docker Build Status](https://img.shields.io/docker/cloud/build/nlpbox/feng-hirst-rst-parser.svg)](https://hub.docker.com/r/nlpbox/feng-hirst-rst-parser)
+
 This repository contains my fork of the RST parser published by
 Vanessa Wei Feng and Graeme Hirst. I updated some of its dependencies,
 dockerized the application, added some end-to-end tests and changed its
 output format to make it simpler to parse (e.g. by [discoursegraphs](https://github.com/arne-cl/discoursegraphs)
-or the [rst-converter-service](https://arne-cl@github.com/NLPbox/rst-converter-service).
+or the [rst-converter-service](https://arne-cl@github.com/NLPbox/rst-converter-service)).
 
 The [original source code](http://www.cs.toronto.edu/~weifeng/software.html)
 is still part of this repository. (The version published in Feng and Hirst (2012)
-is tagged `1.01`, Feng and Hirst (2014) is tagged `2.01` -- both are
+is tagged `1.01`, Feng and Hirst (2014) is tagged `2.01`—both are
 in the `master` branch. The original README is kept in the file
 `README-original.txt`.)
+
 
 
 # Installation
