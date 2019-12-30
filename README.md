@@ -53,3 +53,18 @@ original output, which looks like this:
 ```
 
 but the one seen above (based on / parsed by the Python nltk Tree implementation).
+
+
+# Citation
+
+If you use the Feng/Hirst RST parser in your academic work, please cite the following paper:
+
+Vanessa Wei Feng and Graeme Hirst, 2014.  
+[A Linear-Time Bottom-Up Discourse Parser with Constraints and Post-Editing.](http://aclweb.org/anthology/P14-1048)  
+In _Proceedings of the 52th Annual Meeting of the Association for Computational Linguistics: Human Language Technologies (ACL-2014)_, Baltimore, USA. 
+
+For more technical details, see:
+
+Vanessa Wei Feng and Graeme Hirst, 2014.  
+[Two-pass Discourse Segmentation with Pairing and Global Features.](http://arxiv.org/abs/1407.8215)  
+arXiv:1407.8215v1.
